@@ -1,0 +1,44 @@
+ifinfo [-aw] [-ps] [-i IFNAME|-I ifindex] [key]
+version 1.4
+ -a --all         Output all keys found.
+ -w --nowhite     Do not output whitespace in values.
+ -p --prefix S    Prefix values with string S.
+ -s --suffix S    Append string S to values.
+ --debug
+
+key = ifname|ifindex|mac|ipv4 ...
+ifname=eth0
+link=yes
+up=yes
+running=yes
+promisc=no
+loopback=no
+ifindex=2
+vlan=no
+mtu=1500
+stats=64bit
+rx_dropped=0
+tx_dropped=0
+rx_packets=1375415
+rx_bytes=1472538031
+tx_packets=849614
+tx_bytes=441760210
+rx_errors=0
+rx_over_errors=0
+rx_fifo_errors=0
+rx_missed_errors=0
+tx_errors=0
+mac=00:22:68:69:31:77
+driver=forcedeth
+bus_info=0000:00:0a.0
+ipv4=81.229.136.183
+ipv4prefix=81.229.136.183/24
+proxy_arp=0
+forwarding=1
+send_redirects=1
+secure_redirects=1
+accept_redirects=1
+log_martians=0
+rp_filter=0
+shared_media=1
+accept_source_route=1
