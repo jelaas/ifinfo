@@ -5,6 +5,8 @@
  * Copyright: Jens Låås, 2009
  * Copyright license: According to GPL, see file COPYING in this directory.
  *
+ * Parts copied verbatim from ethtool.
+ *
  */
 
 #include <sys/ioctl.h>
@@ -83,6 +85,14 @@ const int speeds[9] = {
 	10,
 	0
 };
+
+static int strsuffix(const char *str, const char *suf)
+{
+	char *p;
+	p = str + strlen(str) - strlen(suf);
+	if(p < str) return 0;
+	return !strcmp(p, suf);
+}
 
 int iftag_key(struct iftag *it, const char *key)
 {
@@ -426,10 +436,85 @@ static int getlink(struct nlmsghdr *h)
 		drvinfo.cmd = ETHTOOL_GDRVINFO;
 		ifr.ifr_data = (caddr_t)&drvinfo;
 		if(ioctl(fd, SIOCETHTOOL, &ifr) >= 0) {
+			unsigned int n_stats, sz_str, sz_stats;
+			int err, i;
+			struct ethtool_gstrings *strings;
+			struct ethtool_stats *stats;
+			
 			iftag_set(it, "driver", strdup(drvinfo.driver));
 			if(drvinfo.bus_info && drvinfo.bus_info[0])
 				iftag_set(it, "bus_info",
 					  strdup(drvinfo.bus_info));
+			
+			n_stats = drvinfo.n_stats;
+			if(n_stats > 0) {
+				sz_str = n_stats * ETH_GSTRING_LEN;
+				sz_stats = n_stats * sizeof(__u64);
+				strings = calloc(1, sz_str + sizeof(struct ethtool_gstrings));
+				stats = calloc(1, sz_stats + sizeof(struct ethtool_stats));
+				strings->cmd = ETHTOOL_GSTRINGS;
+				strings->string_set = ETH_SS_STATS;
+				strings->len = n_stats;
+				ifr.ifr_data = (caddr_t) strings;
+				err = ioctl(fd, SIOCETHTOOL, &ifr);
+				if (err >= 0) {
+					stats->cmd = ETHTOOL_GSTATS;
+					stats->n_stats = n_stats;
+					ifr.ifr_data = (caddr_t) stats;
+					err = ioctl(fd, SIOCETHTOOL, &ifr);
+				}
+				if (err >= 0) {
+					char *name;
+					__u64 rxpackets=0, rxbytes=0, txpackets=0, txbytes=0;
+					int frxpackets=0, frxbytes=0, ftxpackets=0, ftxbytes=0;
+					for (i = 0; i < n_stats; i++) {
+						name = &strings->data[i * ETH_GSTRING_LEN];
+						if(!strncmp(name, "rx_queue_", 9)) {
+							if(strsuffix(name, "packets")) {
+								rxpackets += stats->data[i];
+								frxpackets=1;
+							}
+							if(strsuffix(name, "bytes")) {
+								rxbytes += stats->data[i];
+								frxbytes=1;
+							}
+						}
+						if(!strncmp(name, "tx_queue_", 9)) {
+							if(strsuffix(name, "packets")) {
+								txpackets += stats->data[i];
+								ftxpackets=1;
+							}
+							if(strsuffix(name, "bytes")) {
+								txbytes += stats->data[i];
+								ftxbytes=1;
+							}
+						}
+						sprintf(str, "%llu", stats->data[i]);
+						iftag_set(it,
+							  strdup(name),
+							  strdup(str));
+					}
+					if(frxpackets) {
+						sprintf(str, "%llu", rxpackets);
+						iftag_set(it, "qsum_rx_packets", strdup(str));
+					}
+					if(ftxpackets) {
+						sprintf(str, "%llu", txpackets);
+						iftag_set(it, "qsum_tx_packets", strdup(str));
+					}
+					if(frxbytes) {
+						sprintf(str, "%llu", rxbytes);
+						iftag_set(it, "qsum_rx_bytes", strdup(str));
+					}
+					if(ftxbytes) {
+						sprintf(str, "%llu", txbytes);
+						iftag_set(it, "qsum_tx_bytes", strdup(str));
+					}
+				}
+				free(strings);
+				free(stats);
+			}
+
 		}
 
 
