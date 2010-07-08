@@ -272,7 +272,7 @@ static int vlan(struct iftag *it, struct rtattr *linkinfo, int len)
 
 static int getlink(struct nlmsghdr *h)
 {
-	char *p, str[128];
+	char *p, str[128], str2[128];
 	int fd;
 	struct rtattr *attr[IFLA_MAX+16];
 	// Kernel IFLA_MAX may be greater than in libc header. So add 16..
@@ -490,8 +490,9 @@ static int getlink(struct nlmsghdr *h)
 							}
 						}
 						sprintf(str, "%llu", stats->data[i]);
+						sprintf(str2, "gstr_%s", name);
 						iftag_set(it,
-							  strdup(name),
+							  strdup(str2),
 							  strdup(str));
 					}
 					if(frxpackets) {
@@ -704,7 +705,7 @@ char *nowhite(const char *s)
 
 int main(int argc, char **argv)
 {
-	int fd, err=0;
+	int fd, err=0, rc=1;
 	struct iftag *it;
 
 	conf.ifname = NULL;
@@ -804,22 +805,25 @@ int main(int argc, char **argv)
 					       conf.prefix,
 					       nowhite(prop->value),
 					       conf.suffix);
+					rc=0;
 				}
 			}
-		if(conf.listall)
+		if(conf.listall) {
 			jl_foreach(it->props, prop) {
-			  if(conf.list)
-			    printf("%s:", it->ifname);
-			  printf("%s=%s%s%s\n",
-				 prop->key,
-				 conf.prefix,
-				 nowhite(prop->value),
-				 conf.suffix);
+				if(conf.list)
+					printf("%s:", it->ifname);
+				printf("%s=%s%s%s\n",
+				       prop->key,
+				       conf.prefix,
+				       nowhite(prop->value),
+				       conf.suffix);
 			}
+			rc=0;
+		}
 		if(conf.list && !conf.listall) printf("%s", conf.key?"":"\n");
 	}
 
-	return 0;
+	return rc;
 }
 
 /*
