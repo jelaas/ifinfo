@@ -704,7 +704,6 @@ int main(int argc, char **argv)
 
 	conf.ifname = NULL;
 	conf.ifindex = -1;
-	conf.key = NULL;
 	conf.keys = jl_new();
 	conf.list = 1;
 	conf.procdir = "/proc";
@@ -749,7 +748,6 @@ int main(int argc, char **argv)
 		jl_append(conf.keys, argv[i]);
 	
 	if(argc >= 2) {
-		conf.key = argv[1];
 		/* -a and key are mutually exclusive: key overrides */
 		conf.listall = 0;
 	}
@@ -816,7 +814,7 @@ int main(int argc, char **argv)
 			}
 			rc=0;
 		}
-		if(conf.list && !conf.listall) printf("%s", conf.key?"":"\n");
+		if(conf.list && !conf.listall) printf("%s", conf.keys->len?"":"\n");
 	}
 
 	return rc;
