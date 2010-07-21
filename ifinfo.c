@@ -46,6 +46,7 @@ struct {
 	int ifindex;
 	char *ifname;
 	char *key;
+	struct jlhead *keys;
 	int list, listall, nowhite;
 	char *procdir;
 	char *prefix, *suffix;
@@ -88,13 +89,23 @@ const int speeds[9] = {
 
 static int strsuffix(const char *str, const char *suf)
 {
-	char *p;
+	const char *p;
 	p = str + strlen(str) - strlen(suf);
 	if(p < str) return 0;
 	return !strcmp(p, suf);
 }
 
-int iftag_key(struct iftag *it, const char *key)
+static int keycmp(const struct jlhead *keys, const char *key)
+{
+	char *k;
+	
+	jl_foreach(keys, k) {
+		if(!strcmp(k, key)) return 1;
+	}
+	return 0;
+}
+
+static int iftag_key(struct iftag *it, const char *key)
 {
 	if( (it->ifindex == conf.ifindex) ||
 	    (conf.ifname && !strcmp(it->ifname, conf.ifname)))
@@ -105,7 +116,7 @@ int iftag_key(struct iftag *it, const char *key)
 	return 0;
 }
 
-struct iftag *iftag_new(const char *ifname, int ifindex)
+static struct iftag *iftag_new(const char *ifname, int ifindex)
 {
 	struct iftag *it;
 	
@@ -116,7 +127,7 @@ struct iftag *iftag_new(const char *ifname, int ifindex)
 	return it;
 }
 
-struct iftag *iftag_get(struct jlhead *iflist, int ifindex, const char *ifname)
+static struct iftag *iftag_get(struct jlhead *iflist, int ifindex, const char *ifname)
 {
 	struct iftag *it;
 	jl_foreach(iflist, it) {
@@ -131,7 +142,7 @@ struct iftag *iftag_get(struct jlhead *iflist, int ifindex, const char *ifname)
 	return it;
 }
 
-struct ifprop *ifprop_new(const char *key, const char *value)
+static struct ifprop *ifprop_new(const char *key, const char *value)
 {
 	struct ifprop *prop;
 	if(conf.debug) printf("new prop %s = %s\n", key, value);
@@ -141,7 +152,7 @@ struct ifprop *ifprop_new(const char *key, const char *value)
 	return prop;
 }
 
-int iftag_set(struct iftag *it, const char *key, const char *value)
+static int iftag_set(struct iftag *it, const char *key, const char *value)
 {
 	return jl_append(it->props, ifprop_new(key, value));
 }
@@ -688,12 +699,13 @@ char *nowhite(const char *s)
 
 int main(int argc, char **argv)
 {
-	int fd, err=0, rc=1;
+	int i, fd, err=0, rc=1;
 	struct iftag *it;
 
 	conf.ifname = NULL;
 	conf.ifindex = -1;
 	conf.key = NULL;
+	conf.keys = jl_new();
 	conf.list = 1;
 	conf.procdir = "/proc";
 	conf.prefix = "";
@@ -733,11 +745,10 @@ int main(int argc, char **argv)
 	
 	argc = jelopt_final(argv, &err);
 	
-	if(argc > 2) {
-		fprintf(stderr, "You can only request one key at a time.\n");
-		exit(1);
-	}
-	if(argc == 2) {
+	for(i=1;i<argc;i++)
+		jl_append(conf.keys, argv[i]);
+	
+	if(argc >= 2) {
 		conf.key = argv[1];
 		/* -a and key are mutually exclusive: key overrides */
 		conf.listall = 0;
@@ -768,7 +779,7 @@ int main(int argc, char **argv)
 		struct ifprop *prop;
 
 		if(conf.list) {
-			if(!conf.key && !conf.listall)
+			if(!conf.keys->len && !conf.listall)
 				printf("%s", it->ifname);
 		} else {
 			if( (conf.ifindex >= 0) &&
@@ -779,11 +790,13 @@ int main(int argc, char **argv)
 				continue;
 		}
 		
-		if(conf.key)
+		if(conf.keys->len)
 			jl_foreach(it->props, prop) {
-				if(!strcmp(conf.key, prop->key)) {
+				if(keycmp(conf.keys, prop->key)) {
 					if(conf.list)
 						printf("%s:", it->ifname);
+					if(conf.keys->len > 1)
+						printf("%s=", prop->key);
 					printf("%s%s%s\n",
 					       conf.prefix,
 					       nowhite(prop->value),
