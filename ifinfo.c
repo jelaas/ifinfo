@@ -2,7 +2,7 @@
  * File: ifinfo.c
  * Implements: displaying and retreiving network device information
  *
- * Copyright: Jens Låås, 2009
+ * Copyright: Jens Låås, 2009, 2010
  * Copyright license: According to GPL, see file COPYING in this directory.
  *
  * Parts copied verbatim from ethtool.
@@ -675,23 +675,6 @@ arp_ignore     forwarding rp_filter
 	return 0;
 }
 
-/*
-
-root@beta:/# bin32/ethtool -i eth0
-driver: veth
-version: 1.0
-firmware-version: N/A
-bus-info: 
-
-root@jens:/foo/bifrost-6.1-beta1# bin32/ethtool -i eth0
-driver: tg3
-version: 3.98
-firmware-version: sb v2.04
-bus-info: 0000:04:00.0
-
-
- */
-
 char *nowhite(const char *s)
 {
   char *w, *p;
@@ -826,26 +809,3 @@ int main(int argc, char **argv)
 	return rc;
 }
 
-/*
-
-ifinfo (-i N|-I idx) <key> -> value
-keys:
-ifname
-ifindex
-mac
-mtu
-ipv4prefix
-ipv4mask
-ipv4addr
-ipv6addr
-ipv4broadcast
-up|down
-linkstatus
-ipv4forwarding
-proxy_arp
-rp_filter
-ipv4accept_redirect
-send_redirect
-ESSID-list
-
- */
