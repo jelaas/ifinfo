@@ -34,11 +34,12 @@ enum {
 	IFLA_NET_NS_PID,
 	IFLA_IFALIAS,
 	IFLA_NUM_VF,		/* Number of VFs if device is SR-IOV PF */
-	IFLA_VF_MAC,		/* Hardware queue specific attributes */
-	IFLA_VF_VLAN,
-	IFLA_VF_TX_RATE,	/* TX Bandwidth Allocation */
-	IFLA_VFINFO,
+	IFLA_VFINFO_LIST,
 	IFLA_STATS64,
+	IFLA_VF_PORTS,
+	IFLA_PORT_SELF,
+	IFLA_AF_SPEC,
+	IFLA_GROUP,		/* Group the device belongs to */
 	__IFLA_MAX
 };
 
