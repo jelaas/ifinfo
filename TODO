@@ -1,1 +1,3 @@
 * sr-iov show IFLA_VF info (multiq card shows as multiple cards)
+
+* interrupts per interface (per queue also?)

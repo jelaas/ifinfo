@@ -585,7 +585,7 @@ static int getaddr(struct nlmsghdr *h)
 		attr[IFA_ADDRESS] = attr[IFA_LOCAL];
 	if(attr[IFA_ADDRESS] == NULL)
 		return 0;
-
+	
 	rta = attr[IFA_ADDRESS];
 	p = RTA_DATA(rta); /* pointer to ip addr */
 	if(ifa->ifa_family == AF_INET) {

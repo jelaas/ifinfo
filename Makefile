@@ -25,7 +25,7 @@ SYSCONFDIR= /etc
 MANDIR= $(PREFIX)/share/man
 V=`cat version.txt|cut -d ' ' -f 2`
 CFLAGS = $(DIETINC) -DPREFIX=\"$(PREFIX)\" -DSYSCONFDIR=\"$(SYSCONFDIR)\"  -DMANDIR=\"$(MANDIR)\" -Os -Wall -march=i586 -g -DVERSION=\"$(V)\"
-CC=$(DIET) gcc
+CC=musl-gcc-x86_32
 ifinfo:	ifinfo.o stats64.o jelist.o jelopt.o
 	$(CC) $(DIETLIB) -o ifinfo ifinfo.o stats64.o jelist.o jelopt.o
 clean:
